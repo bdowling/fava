@@ -1,0 +1,51 @@
+language: python
+install: "pip install tox"
+script: "tox -e $TRAVIS_BUILD"
+
+matrix:
+  allow_failures:
+    - env: TRAVIS_BUILD=deploy
+    - env: TRAVIS_BUILD=py36-dev
+  fast_finish: true
+  include:
+    - env: TRAVIS_BUILD=coverage
+      python: 3.5
+      before_install: "pip install codecov"
+      after_success: "codecov"
+    - env: TRAVIS_BUILD=py36
+      python: 3.6
+    - env: TRAVIS_BUILD=py36-dev
+      python: 3.6
+    - env: TRAVIS_BUILD=lint
+      python: 3.5
+      dist: trusty
+      sudo: false
+      before_install: "nvm use stable"
+      script: "make && make lint"
+    - env: TRAVIS_BUILD=deploy
+      python: 3.5
+      dist: trusty
+      sudo: required
+      before_install: "sudo apt-get install --no-install-recommends -y icnsutils graphicsmagick xz-utils"
+      install: |
+        . $HOME/.nvm/nvm.sh
+        nvm install stable
+        nvm use stable
+        pip install pyinstaller
+        pip install -e .
+      script: "make -C gui dist"
+    - env: TRAVIS_BUILD=deploy
+      language: node
+      node_js: node
+      os: osx
+      install: |
+        brew update
+        brew install python3
+        pip3 install pyinstaller beancount
+        pip3 install -e .
+      script: "make -C gui dist"
+
+cache:
+  directories:
+    - $HOME/.cache
+    - $HOME/Library/Caches
